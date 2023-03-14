@@ -3,8 +3,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <time.h>
-
+#define BUFF_SIZE 256
 void reverse_dir_name(char *dest_str) {
     unsigned int len = strlen(dest_str);
     unsigned int slash_pos = 0;
@@ -51,6 +50,25 @@ char *concat_dir_and_file(const char *s1, const char *s2) {
     return result;
 }
 
+void reverse_file_data(FILE *file_in, FILE *file_out) {
+    fseek(file_in, 0L, SEEK_END);
+    int file_size = ftell(file_in);
+    rewind(file_in);
+    int count_blocks = file_size / BUFF_SIZE;
+    for (int i = count_blocks; i >= 0; i--) {
+        char *buffer = malloc(BUFF_SIZE * sizeof(char));
+        fseek(file_in, i * BUFF_SIZE, SEEK_SET);
+        unsigned int bytes_read = fread(buffer, sizeof(char), BUFF_SIZE, file_in);
+        for (int j = 0; j < bytes_read / 2; j++) {
+            char tmp = buffer[j];
+            buffer[j] = buffer[bytes_read - j - 1];
+            buffer[bytes_read - j - 1] = tmp;
+        }
+        fwrite(buffer, sizeof(char), bytes_read, file_out);
+        free(buffer);
+    }
+}
+
 void reverse_file(const char *dir_name, const char *new_dir_name, const char *file_name) {
     char *file_path = concat_dir_and_file(dir_name, file_name);
     char *new_file_name = malloc(sizeof(char) * strlen(file_name));
@@ -71,38 +89,8 @@ void reverse_file(const char *dir_name, const char *new_dir_name, const char *fi
         printf("Не удалось открыть файл: file_out\n");
         exit(1);
     }
-//
-    fseek(file_in, 0L, SEEK_END);
-    int file_size = ftell(file_in);
-    rewind(file_in);
+    reverse_file_data(file_in, file_out);
 
-    int buff_size = 256;
-    int count_blocks = file_size / buff_size;
-    int last_block_size = file_size % buff_size;
-    char *buffer = malloc(buff_size * sizeof(char));
-    unsigned int bytes_read = 0;
-
-
-    for(int i = count_blocks; i>=0; i--){
-        fseek(file_in, i*buff_size, SEEK_SET);
-        bytes_read = fread(buffer, sizeof(char), buff_size, file_in);
-        for (int j = 0; j < bytes_read / 2; j++) {
-            char tmp = buffer[j];
-            buffer[j] = buffer[bytes_read - j - 1];
-            buffer[bytes_read - j - 1] = tmp;
-        }
-        fwrite(buffer, sizeof(char), bytes_read, file_out);
-    }
-
-//    while (ftell(file_in) != SEEK_SET) {
-//
-//        fwrite(buffer, sizeof(char), bytes_read, file_out);
-//        fseek(file_in, -2 * buff_size, SEEK_CUR);
-//        int pos = ftell(file_in);
-//        pos++;
-//        // rewind(file_out);
-//    }
-    free(buffer);
     fclose(file_in);
     fclose(file_out);
 }
