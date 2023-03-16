@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <unistd.h>
 
 #define BUFF_SIZE 256
 
@@ -12,7 +13,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     puts(argv[0]);
-    puts("dfd");
+  //  puts("dfd");
 //   a)
     if (strcmp(argv[0], "./task2_a") == 0) {
         if (mkdir(argv[1], 0777) == -1) {
@@ -75,6 +76,43 @@ int main(int argc, char *argv[]) {
             perror("rmfile");
             exit(1);
         }
+    }
+//    g)
+    else if (strcmp(argv[0], "./task2_g") == 0) {
+        if (symlink(argv[1], "symlink_file") != 0) {
+            puts("Error while creating symlink");
+            perror("crsymlink");
+            exit(1);
+        }
+    }
+//    h)
+    else if (strcmp(argv[0], "./task2_h") == 0) {
+        char *buffer = (char *) calloc(sizeof(char), BUFF_SIZE);
+        readlink(argv[1], buffer, BUFF_SIZE);
+        puts(buffer);
+
+
+    }
+//    i)
+    else if (strcmp(argv[0], "./task2_h") == 0) {
+        char *buffer = (char *) calloc(sizeof(char), BUFF_SIZE);
+        readlink(argv[1], buffer, BUFF_SIZE);
+        puts(buffer);
+
+        FILE *file = fopen(argv[1], "r");
+        if (!file) {
+            puts("Error while opening file");
+            perror("openfile");
+            fclose(file);
+            exit(1);
+        }
+        char *buf = (char *) calloc(sizeof(char), BUFF_SIZE);
+        while (fread(buf, sizeof(char), BUFF_SIZE, file) > 0) {
+            puts(buf);
+        }
+        fclose(file);
+
+
     }else {
         puts("hi3");
     }
